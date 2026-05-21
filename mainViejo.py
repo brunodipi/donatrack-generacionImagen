@@ -1,22 +1,18 @@
-# Actualización del archivo main.py
 import io
 import math
 import textwrap
-from typing import List
-from pydantic import BaseModel
 from fastapi import FastAPI, Query
 from fastapi.responses import StreamingResponse
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-app = FastAPI(title="DonaTrack Media Engine")
-
-class DonanteRanking(BaseModel):
-    Mes: str
-    Donante: str
-    CantidadMisiones: int
+app = FastAPI(title="Generador de Medallas DonaTrack")
 
 @app.get("/generar-medalla")
-def generar_medalla(user: str = Query(...), badge: str = Query(...), descripcion: str = Query("")):
+def generar_medalla(
+    user: str = Query(...), 
+    badge: str = Query(...), 
+    descripcion: str = Query("")
+):
     ANCHO, ALTO = 1000, 1000
     
     # Paleta de colores
@@ -124,61 +120,5 @@ def generar_medalla(user: str = Query(...), badge: str = Query(...), descripcion
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG", quality=95)
     buffer.seek(0)
-    pass
-
-@app.post("/generar-top3")
-def generar_top3(donantes: List[DonanteRanking]):
-    ANCHO, ALTO = 1080, 1080 # Formato cuadrado para Instagram
-    COLOR_FONDO = "#F9F7F1"
-    COLOR_ORO = "#DCA828"
-    COLOR_PLATA = "#C0C0C0"
-    COLOR_BRONCE = "#CD7F32"
-    COLOR_ROJO = "#A6192E"
-    COLOR_TEXTO = "#2C2C2C"
-
-    image = Image.new("RGB", (ANCHO, ALTO), COLOR_FONDO)
-    draw = ImageDraw.Draw(image)
     
-    try:
-        font_titulo = ImageFont.truetype("DejaVuSans-Bold.ttf", 60)
-        font_mes = ImageFont.truetype("DejaVuSans.ttf", 40)
-        font_nombre = ImageFont.truetype("DejaVuSans-Bold.ttf", 45)
-        font_puntos = ImageFont.truetype("DejaVuSans.ttf", 35)
-        font_podio = ImageFont.truetype("DejaVuSans-Bold.ttf", 120)
-    except:
-        font_titulo = font_nombre = font_puntos = ImageFont.load_default()
-
-    # Título Superior
-    mes_nombre = donantes[0].Mes if donantes else "Mes"
-    draw.text((ANCHO//2, 120), "TOP DONANTES", font=font_titulo, fill=COLOR_ROJO, anchor="mm")
-    draw.text((ANCHO//2, 190), f"Ranking Mensual - {mes_nombre}", font=font_mes, fill="#888888", anchor="mm")
-
-    # Coordenadas del Podio (Base 700px altura)
-    # 1er lugar (Centro), 2do (Izquierda), 3ro (Derecha)
-    config = [
-        {"idx": 0, "x": 540, "h": 450, "color": COLOR_ORO, "label": "1"},
-        {"idx": 1, "x": 240, "h": 320, "color": COLOR_PLATA, "label": "2"},
-        {"idx": 2, "x": 840, "h": 220, "color": COLOR_BRONCE, "label": "3"}
-    ]
-
-    for c in config:
-        if c["idx"] < len(donantes):
-            d = donantes[c["idx"]]
-            x, h = c["x"], c["h"]
-            # Dibujar Bloque del Podio
-            draw.rectangle([x-140, 900-h, x+140, 900], fill=c["color"], outline=COLOR_TEXTO, width=3)
-            # Número de posición
-            draw.text((x, 900 - h//2), c["label"], font=font_podio, fill="#FFFFFF44", anchor="mm")
-            # Nombre del Donante
-            draw.text((x, 900 - h - 80), d.Donante.upper(), font=font_nombre, fill=COLOR_TEXTO, anchor="mm")
-            # Cantidad de Misiones
-            draw.text((x, 900 - h - 30), f"{d.CantidadMisiones} misiones", font=font_puntos, fill="#666666", anchor="mm")
-
-    # Pie de imagen
-    draw.rectangle([0, 950, ANCHO, 1080], fill=COLOR_ROJO)
-    draw.text((ANCHO//2, 1015), "DONA TRACK - ONG SOLIDARIA", font=font_mes, fill="#FFFFFF", anchor="mm")
-
-    buffer = io.BytesIO()
-    image.save(buffer, format="JPEG", quality=95)
-    buffer.seek(0)
     return StreamingResponse(buffer, media_type="image/jpeg")
