@@ -15,26 +15,25 @@ def generar_medalla(
 ):
     ANCHO, ALTO = 1000, 1000
     
-    # Paleta de colores más rica y viva (basada en tu referencia)
-    COLOR_FONDO = "#F9F7F1"        # Beige muy clarito
-    COLOR_ORO_EXTERIOR = "#DCA828" # Oro vivo
-    COLOR_ORO_INTERIOR = "#C79A22" # Oro sombra para el borde
-    COLOR_ROJO = "#A6192E"         # Rojo profundo
-    COLOR_ROJO_OSCURO = "#7A0016"  # Sombra del listón
-    COLOR_CENTRO = "#FFFDF9"       # Blanco cálido
-    COLOR_TEXTO = "#2C2C2C"        # Casi negro para buena lectura
+    # Paleta de colores
+    COLOR_FONDO = "#F9F7F1"
+    COLOR_ORO_EXTERIOR = "#DCA828"
+    COLOR_ORO_INTERIOR = "#C79A22"
+    COLOR_ROJO = "#A6192E"
+    COLOR_ROJO_OSCURO = "#7A0016"
+    COLOR_CENTRO = "#FFFDF9"
+    COLOR_TEXTO = "#2C2C2C"
 
-    # 1. Crear imagen base y capas para sombras
+    # Capa base (JPEG) y capa transparente para las sombras reales
     image = Image.new("RGB", (ANCHO, ALTO), COLOR_FONDO)
     capa_sombras = Image.new("RGBA", (ANCHO, ALTO), (255, 255, 255, 0))
     
     draw = ImageDraw.Draw(image)
     draw_sombras = ImageDraw.Draw(capa_sombras)
     
-    # Subimos un poquito el centro para dejar espacio al listón de abajo
     centro_x, centro_y = ANCHO // 2, ALTO // 2 - 30 
 
-    # --- 2. DIBUJAR LA ESTRELLA DENTADA (Fondo dorado) ---
+    # --- 1. DIBUJAR LA ESTRELLA DENTADA Y SOMBRAS ---
     puntos_estrella = []
     num_puntas = 24
     radio_externo = 400
@@ -47,82 +46,77 @@ def generar_medalla(
         y = centro_y + r * math.sin(angulo)
         puntos_estrella.append((x, y))
 
-    # Sombra difuminada de la estrella
-    puntos_sombra = [(x+10, y+15) for x, y in puntos_estrella]
-    draw_sombras.polygon(puntos_sombra, fill=(0, 0, 0, 60))
-    capa_sombras = capa_sombras.filter(ImageFilter.GaussianBlur(8)) # Magia del volumen 3D
+    # Sombras de la estrella y el listón (en la capa transparente)
+    banner_y = centro_y + 240
+    banner_w, banner_h = 600, 110
+    
+    puntos_sombra_estrella = [(x+8, y+12) for x, y in puntos_estrella]
+    draw_sombras.polygon(puntos_sombra_estrella, fill=(0, 0, 0, 70))
+    draw_sombras.rectangle([centro_x - banner_w//2 + 8, banner_y + 12, centro_x + banner_w//2 + 8, banner_y + banner_h + 12], fill=(0, 0, 0, 70))
+
+    # Difuminar las sombras y pegarlas en el fondo
+    capa_sombras = capa_sombras.filter(ImageFilter.GaussianBlur(8))
     image.paste(capa_sombras, (0, 0), capa_sombras)
 
     # Estrella dorada principal
     draw.polygon(puntos_estrella, fill=COLOR_ORO_EXTERIOR, outline=COLOR_ORO_INTERIOR, width=5)
 
-    # --- 3. ANILLOS INTERNOS ---
-    # Anillo Rojo grueso
+    # --- 2. ANILLOS INTERNOS ---
     r_rojo = 310
     draw.ellipse((centro_x - r_rojo, centro_y - r_rojo, centro_x + r_rojo, centro_y + r_rojo), 
                  fill=COLOR_ROJO, outline="#8C1325", width=4)
     
-    # Círculo Blanco/Crema central
     r_centro = 260
     draw.ellipse((centro_x - r_centro, centro_y - r_centro, centro_x + r_centro, centro_y + r_centro), 
                  fill=COLOR_CENTRO)
     
-    # Borde dorado sutil interno
     r_borde = 255
     draw.ellipse((centro_x - r_borde, centro_y - r_borde, centro_x + r_borde, centro_y + r_borde), 
                  outline=COLOR_ORO_EXTERIOR, width=3)
 
-    # --- 4. FUENTES ---
+    # --- 3. FUENTES ---
     try:
-        font_title = ImageFont.truetype("DejaVuSans-Bold.ttf", 30)
-        font_badge = ImageFont.truetype("DejaVuSans-Bold.ttf", 45)
+        font_title = ImageFont.truetype("DejaVuSans-Bold.ttf", 28)
+        font_badge = ImageFont.truetype("DejaVuSans-Bold.ttf", 38) # Reducido un poco para que encaje
         font_desc = ImageFont.truetype("DejaVuSans.ttf", 32)
         font_user = ImageFont.truetype("DejaVuSans-Bold.ttf", 45)
     except IOError:
         font_title = font_badge = font_desc = font_user = ImageFont.load_default()
 
-    # --- 5. TEXTOS DEL CENTRO ---
-    # Marca superior
-    txt_top = "DONA TRACK"
-    bbox_top = draw.textbbox((0, 0), txt_top, font=font_title)
-    draw.text((centro_x - (bbox_top[2]-bbox_top[0])//2, centro_y - 190), txt_top, font=font_title, fill="#888888")
+    # --- 4. TEXTOS PERFECTAMENTE CENTRADOS (anchor="mm") ---
+    # Título superior
+    draw.text((centro_x, centro_y - 190), "DONA TRACK", font=font_title, fill="#888888", anchor="mm")
 
-    # Nombre de la Medalla (Grande y Rojo)
-    bbox_badge = draw.textbbox((0, 0), badge.upper(), font=font_badge)
-    draw.text((centro_x - (bbox_badge[2]-bbox_badge[0])//2, centro_y - 120), badge.upper(), font=font_badge, fill=COLOR_ROJO)
+    # Nombre de la Insignia (Envuelta a 18 caracteres por si es muy larga)
+    lineas_badge = textwrap.wrap(badge.upper(), width=18)
+    y_badge = centro_y - 120
+    for linea in lineas_badge:
+        draw.text((centro_x, y_badge), linea, font=font_badge, fill=COLOR_ROJO, anchor="mm")
+        y_badge += 42
 
-    # Línea decorativa
-    draw.line((centro_x - 80, centro_y - 40, centro_x + 80, centro_y - 40), fill=COLOR_ORO_EXTERIOR, width=3)
+    # Línea decorativa dorada
+    draw.line((centro_x - 80, centro_y - 45, centro_x + 80, centro_y - 45), fill=COLOR_ORO_EXTERIOR, width=3)
 
-    # La Descripción (Cortada inteligentemente en renglones)
+    # Descripción (Envuelta estrictamente a 22 caracteres para no tocar los bordes)
     if descripcion:
-        lineas = textwrap.wrap(descripcion, width=30) # Corta a los 30 caracteres
-        y_text = centro_y + 10
-        for linea in lineas:
-            bbox_line = draw.textbbox((0, 0), linea, font=font_desc)
-            w_line = bbox_line[2] - bbox_line[0]
-            draw.text((centro_x - w_line//2, y_text), linea, font=font_desc, fill=COLOR_TEXTO)
-            y_text += 45
+        lineas_desc = textwrap.wrap(descripcion, width=22) 
+        y_desc = centro_y + 15
+        for linea in lineas_desc:
+            draw.text((centro_x, y_desc), linea, font=font_desc, fill=COLOR_TEXTO, anchor="mm")
+            y_desc += 40
 
-    # --- 6. EL LISTÓN INFERIOR (Banner) ---
-    banner_y = centro_y + 240
-    banner_w, banner_h = 600, 110
-    
+    # --- 5. EL LISTÓN INFERIOR ---
     # "Colas" rojas del listón dobladas hacia atrás
     draw.polygon([(centro_x - 280, banner_y + 50), (centro_x - 400, banner_y + 160), (centro_x - 180, banner_y + 160)], fill=COLOR_ROJO_OSCURO)
     draw.polygon([(centro_x + 280, banner_y + 50), (centro_x + 400, banner_y + 160), (centro_x + 180, banner_y + 160)], fill=COLOR_ROJO_OSCURO)
     
-    # Sombra del listón dorado
-    draw.rectangle([centro_x - banner_w//2 + 10, banner_y + 15, centro_x + banner_w//2 + 10, banner_y + banner_h + 15], fill="#00000030")
-
     # Listón dorado frontal
     draw.rectangle([centro_x - banner_w//2, banner_y, centro_x + banner_w//2, banner_y + banner_h], fill=COLOR_ORO_EXTERIOR, outline=COLOR_ORO_INTERIOR, width=3)
     
-    # Nombre del Usuario en el listón
-    bbox_user = draw.textbbox((0, 0), user.upper(), font=font_user)
-    draw.text((centro_x - (bbox_user[2]-bbox_user[0])//2, banner_y + (banner_h - (bbox_user[3]-bbox_user[1]))//2 - 5), user.upper(), font=font_user, fill=COLOR_TEXTO)
+    # Nombre del Usuario en el centro exacto del listón dorado
+    draw.text((centro_x, banner_y + banner_h // 2), user.upper(), font=font_user, fill=COLOR_TEXTO, anchor="mm")
 
-    # --- 7. EXPORTAR ---
+    # --- 6. EXPORTAR ---
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG", quality=95)
     buffer.seek(0)
