@@ -14,7 +14,7 @@ def generar_medalla(user: str = Query(...), badge: str = Query(...)):
     COLOR_TEXTO_INSIGNIA = "#3A3A3A"
 
     # Lienzo transparente
-    image = Image.new("RGBA", (ANCHO, ALTO), (255, 255, 255, 0))
+    image = Image.new("RGB", (ANCHO, ALTO), "#FAF8F5")
     draw = ImageDraw.Draw(image)
     centro_x, centro_y = ANCHO // 2, ALTO // 2
 
@@ -38,7 +38,7 @@ def generar_medalla(user: str = Query(...), badge: str = Query(...)):
                   centro_x + radio_interno, centro_y + radio_interno), fill=COLOR_ORO_BRILLO, outline=COLOR_ORO_SOMBRA, width=5)
 
     # Título superior
-    texto_titulo = "DONAT TRACK"
+    texto_titulo = "DONA TRACK"
     bbox_titulo = draw.textbbox((0, 0), texto_titulo, font=font_badge)
     w_t = bbox_titulo[2] - bbox_titulo[0]
     draw.text((centro_x - w_t//2 + 3, centro_y - radio_base + 120 + 3), texto_titulo, font=font_badge, fill=COLOR_ORO_SOMBRA)
@@ -72,7 +72,7 @@ def generar_medalla(user: str = Query(...), badge: str = Query(...)):
 
     # En lugar de guardar en disco, enviamos el archivo binario directamente por la red
     buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
+    image.save(buffer, format="JPEG", quality=95)
     buffer.seek(0)
     
-    return StreamingResponse(buffer, media_type="image/png")
+    return StreamingResponse(buffer, media_type="image/jpeg")
