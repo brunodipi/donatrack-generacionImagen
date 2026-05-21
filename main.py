@@ -64,11 +64,11 @@ def generar_medalla(user: str = Query(...), badge: str = Query(...)):
     draw.text((centro_x - w_u//2, pos_y_user), user.upper(), font=font_user, fill=COLOR_TEXTO_INSIGNIA)
 
     # Texto de la insignia
-    bbox_badge = draw.textbbox((0, 0), badge_name, font=font_badge)
+    bbox_badge = draw.textbbox((0, 0), badge, font=font_badge)
     w_b = bbox_badge[2] - bbox_badge[0]
     h_b = bbox_badge[3] - bbox_badge[1]
-    draw.text((centro_x - w_b//2 + 2, centro_y - h_b//2 + 10 + 2), badge_name, font=font_badge, fill=COLOR_ORO_SOMBRA)
-    draw.text((centro_x - w_b//2, centro_y - h_b//2 + 10), badge_name, font=font_badge, fill=COLOR_TEXTO_INSIGNIA)
+    draw.text((centro_x - w_b//2 + 2, centro_y - h_b//2 + 10 + 2), badge, font=font_badge, fill=COLOR_ORO_SOMBRA)
+    draw.text((centro_x - w_b//2, centro_y - h_b//2 + 10), badge, font=font_badge, fill=COLOR_TEXTO_INSIGNIA)
 
     # En lugar de guardar en disco, enviamos el archivo binario directamente por la red
     buffer = io.BytesIO()
