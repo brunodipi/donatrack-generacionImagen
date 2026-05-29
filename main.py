@@ -125,32 +125,50 @@ def generar_top3(donantes: List[DonanteRanking]):
     except:
         font_titulo = font_mes = font_nombre = font_puntos = font_podio = ImageFont.load_default()
 
+    # Títulos
     mes_nombre = donantes[0].Mes if donantes else "Mes"
     draw.text((ANCHO//2, 120), "TOP DONANTES", font=font_titulo, fill=COLOR_ROJO, anchor="mm")
     draw.text((ANCHO//2, 190), f"Ranking Mensual - {mes_nombre}", font=font_mes, fill="#888888", anchor="mm")
 
-    # Configuración de los escalones del podio: Centro(1ro), Izquierda(2do), Derecha(3ro)
-    config = [
-        {"idx": 0, "x": 540, "h": 450, "color": COLOR_ORO, "label": "1"},
-        {"idx": 1, "x": 240, "h": 320, "color": COLOR_PLATA, "label": "2"},
-        {"idx": 2, "x": 840, "h": 220, "color": COLOR_BRONCE, "label": "3"}
-    ]
+    # --- LÓGICA DINÁMICA DE POSICIONAMIENTO ---
+    cantidad = len(donantes)
+    config = []
+
+    if cantidad == 1:
+        # Solo el 1ro, centrado y más imponente
+        config = [{"idx": 0, "x": 540, "h": 500, "w": 400, "color": COLOR_ORO, "label": "1"}]
+    elif cantidad == 2:
+        # El 1ro y 2do centrados como pareja (evita el hueco del 3ro)
+        config = [
+            {"idx": 0, "x": 690, "h": 450, "w": 280, "color": COLOR_ORO, "label": "1"},
+            {"idx": 1, "x": 390, "h": 320, "w": 280, "color": COLOR_PLATA, "label": "2"}
+        ]
+    else:
+        # El Top 3 completo clásico
+        config = [
+            {"idx": 0, "x": 540, "h": 450, "w": 280, "color": COLOR_ORO, "label": "1"},
+            {"idx": 1, "x": 240, "h": 320, "w": 280, "color": COLOR_PLATA, "label": "2"},
+            {"idx": 2, "x": 840, "h": 220, "w": 280, "color": COLOR_BRONCE, "label": "3"}
+        ]
 
     for c in config:
         if c["idx"] < len(donantes):
             d = donantes[c["idx"]]
-            x, h = c["x"], c["h"]
+            x, h, w = c["x"], c["h"], c["w"]
             
-            draw.rectangle([x-140, 900-h, x+140, 900], fill=c["color"], outline=COLOR_TEXTO, width=3)
-            draw.text((x, 900 - h//2), c["label"], font=font_podio, fill="#FFFFFF44", anchor="mm")
+            # Dibujar Bloque del Podio con ancho dinámico
+            draw.rectangle([x - w//2, 900-h, x + w//2, 900], fill=c["color"], outline=COLOR_TEXTO, width=3)
+            # Número de posición decorativo
+            draw.text((x, 900 - h//2), c["label"], font=font_podio, fill="#FFFFFF55", anchor="mm")
+            # Nombre y misiones
             draw.text((x, 900 - h - 80), d.Donante.upper(), font=font_nombre, fill=COLOR_TEXTO, anchor="mm")
-            draw.text((x, 900 - h - 30), f"{d.CantidadMisiones} misiones", font=font_puntos, fill="#666666", anchor="mm")
+            draw.text((x, 900 - h - 35), f"{d.CantidadMisiones} misiones", font=font_puntos, fill="#555555", anchor="mm")
 
+    # Pie de página institucional
     draw.rectangle([0, 950, ANCHO, 1080], fill=COLOR_ROJO)
-    draw.text((ANCHO//2, 1015), "DONA TRACK - ONG SOLIDARIA", font=font_mes, fill="#FFFFFF", anchor="mm")
+    draw.text((ANCHO//2, 1015), "DONA TRACK - CONSTRUYENDO FUTURO", font=font_mes, fill="#FFFFFF", anchor="mm")
 
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG", quality=95)
     buffer.seek(0)
-    
     return StreamingResponse(buffer, media_type="image/jpeg")
