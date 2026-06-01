@@ -15,6 +15,10 @@ class DonanteRanking(BaseModel):
     Donante: str
     CantidadMisiones: int
 
+@app.get("/")
+def health_check():
+    return {"status": "estoy despierto"}
+
 # --- RUTA 1: LA MEDALLA INDIVIDUAL (GET) ---
 @app.get("/generar-medalla")
 def generar_medalla(
@@ -135,16 +139,13 @@ def generar_top3(donantes: List[DonanteRanking]):
     config = []
 
     if cantidad == 1:
-        # Solo el 1ro, centrado y más imponente
         config = [{"idx": 0, "x": 540, "h": 500, "w": 400, "color": COLOR_ORO, "label": "1"}]
     elif cantidad == 2:
-        # El 1ro y 2do centrados como pareja (evita el hueco del 3ro)
         config = [
             {"idx": 0, "x": 690, "h": 450, "w": 280, "color": COLOR_ORO, "label": "1"},
             {"idx": 1, "x": 390, "h": 320, "w": 280, "color": COLOR_PLATA, "label": "2"}
         ]
     else:
-        # El Top 3 completo clásico
         config = [
             {"idx": 0, "x": 540, "h": 450, "w": 280, "color": COLOR_ORO, "label": "1"},
             {"idx": 1, "x": 240, "h": 320, "w": 280, "color": COLOR_PLATA, "label": "2"},
