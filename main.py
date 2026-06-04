@@ -106,8 +106,8 @@ def generar_medalla(
     return StreamingResponse(buffer, media_type="image/jpeg")
 
 
-# --- RUTA 2: EL TOP 3 MENSUAL (POST) ---
-@app.post("/generar-top3")
+# --- RUTA 2: EL TOP 3 MENSUAL ---
+@app.get("/top3")
 def generar_top3(donantes: List[DonanteRanking]):
     ANCHO, ALTO = 1080, 1080 
     COLOR_FONDO = "#F9F7F1"
